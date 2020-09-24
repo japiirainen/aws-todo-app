@@ -1,18 +1,24 @@
-import * as sns from '@aws-cdk/aws-sns'
-import * as subs from '@aws-cdk/aws-sns-subscriptions'
-import * as sqs from '@aws-cdk/aws-sqs'
 import * as cdk from '@aws-cdk/core'
+import * as lambda from '@aws-cdk/aws-lambda'
+import * as apiGateway from '@aws-cdk/aws-apigateway'
 
 export class AwsTodoStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
-    const queue = new sqs.Queue(this, 'AwsTodoQueue', {
-      visibilityTimeout: cdk.Duration.seconds(300),
+    const helloLambda = new lambda.Function(this, 'HelloLamda', {
+      code: lambda.Code.fromAsset('lambda'),
+      handler: 'hello.handler',
+      runtime: lambda.Runtime.NODEJS_12_X,
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(10),
+      environment: {
+        isProduction: 'no',
+      },
     })
 
-    const topic = new sns.Topic(this, 'AwsTodoTopic')
-
-    topic.addSubscription(new subs.SqsSubscription(queue))
+    new apiGateway.LambdaRestApi(this, 'Endpoint', {
+      handler: helloLambda,
+    })
   }
 }
